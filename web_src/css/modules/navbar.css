@@ -108,6 +108,13 @@
   }
 }
 
+@media (min-width: 767.98px) {
+  #navbar .navbar-mobile-right,
+  #navbar .mobile-only {
+    display: none;
+  }
+}
+
 #navbar a.item .notification_count {
   color: var(--color-nav-bg);
   padding: 0 3.75px;
@@ -137,11 +144,108 @@
   z-index: 1; /* prevent menu button background from overlaying icon */
 }
 
-.secondary-nav {
-  background: var(--color-secondary-nav-bg) !important; /* important because of .ui.secondary.menu */
+/* New navbar */
+
+.container-new {
+  display: flex;
 }
 
-.issue-navbar {
+#navbar-new {
+  height: 100vh;
+  width: 300px;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 1000;
+  overflow-y: auto;
+  background: var(--color-nav-bg);
+  border-right: 1px solid var(--color-secondary);
+  padding: 10px;
+}
+
+#navbar-new .navbar-left,
+#navbar-new .navbar-right {
   display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+#navbar-new .item {
+  min-height: 36px;
+  padding-top: 3px;
+  padding-bottom: 3px;
+  display: flex;
+  font-size: 17px;
+}
+
+#navbar-new .secondary.menu > .item > .svg,
+#navbar-new .right.menu > .item > .svg {
+  margin-right: 0;
+}
+
+.container-new .main-content {
+  margin-left: 250px;
+  flex: 1;
+}
+
+@media (min-width: 767.98px) {
+  #navbar-new .navbar-mobile-right,
+  #navbar-new .mobile-only {
+    display: none;
+  }
+}
+
+/* Add styles for navbar top items */
+#navbar-new .navbar-top {
+  display: flex;
+  align-items: center;
   justify-content: space-between;
+  padding: 10px;
+  background: var(--color-nav-bg);
+  border-bottom: 1px solid var(--color-secondary);
+}
+
+#navbar-new .navbar-top .noti-bell{
+  margin-left: 140px;
+  margin-top: 5px;
+}
+
+#navbar-new .navbar-top .item {
+  min-height: 36px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+}
+
+#navbar-new .navbar-top .item:last-child {
+  margin-left: auto;
+}
+
+#navbar-new .navbar-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px;
+  background: var(--color-nav-bg);
+  border-bottom: 1px solid var(--color-secondary);
+}
+
+#navbar-new .navbar-top .item {
+  min-height: 36px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+}
+
+#navbar-new .navbar-top .item:last-child {
+  margin-left: auto;
+}
+
+#navbar-new-logo {
+  margin: 0;
+}
+
+#navbar-new .dropdown .menu {
+  right: 0;
+  left: auto;
 }

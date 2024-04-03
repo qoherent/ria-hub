@@ -1,3 +1,9 @@
+.dashboard {
+  align-items: center; /* Vertically center the items */
+  height: 92.5vh;
+  justify-content: center;
+}
+
 .dashboard.feeds .context.user.menu,
 .dashboard.issues .context.user.menu {
   z-index: 101;
@@ -26,6 +32,23 @@
 .dashboard.feeds .filter.menu .item .text.truncate,
 .dashboard.issues .filter.menu .item .text.truncate {
   width: 75%;
+}
+
+.dashboard.feeds .filter.menu .item .floating.label,
+.dashboard.issues .filter.menu .item .floating.label {
+  top: 7px;
+  left: 90%;
+  width: 15%;
+}
+
+@media (max-width: 767.98px) {
+  .dashboard.feeds .filter.menu .item .floating.label,
+  .dashboard.issues .filter.menu .item .floating.label {
+    top: 10px;
+    left: auto;
+    width: auto;
+    right: 13px;
+  }
 }
 
 /* Sort */
@@ -60,14 +83,117 @@
   margin: 0 1px; /* Accommodate for Semantic's 1px hacks on .attached elements */
 }
 
-.dashboard .secondary-nav {
-  padding: 1px 12px; /* match .overflow-menu-items in height */
+.dashboard .dashboard-navbar {
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
 }
 
-.dashboard .secondary-nav .org-visibility .label {
+.dashboard .dashboard-navbar .org-visibility .label {
   margin-left: 5px;
 }
 
-.dashboard .secondary-nav .ui.dropdown {
+.dashboard .dashboard-navbar .ui.dropdown {
   max-width: 100%;
+}
+
+.dashboard .outer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.dashboard .inner {
+  display: flex; 
+  margin-bottom: 20px;
+  border: 1px solid #ddd;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  padding: 40px 30px;
+  box-sizing: border-box;
+  max-width: 400px;
+  margin-left: 2px;
+  margin-right: 2px;
+  min-height: 165px;
+  transition-property: background-color;
+  transition-duration: 0.5s;
+  cursor: pointer;
+}
+
+@media (max-width: 1450px) {
+  .dashboard .outer {
+    justify-content: center;
+  }
+
+  .dashboard .inner {
+    max-width: 565px;
+  }
+
+  .dashboard {
+    height: 110vh;
+  }
+
+  .dashboard .container {
+    margin-bottom: 190px;
+  }  
+}
+
+@media (max-width: 768px) {
+  .dashboard {
+    height: 120vh;
+  }
+}
+
+.dashboard .container {
+  margin-top: 40px;
+}
+
+.dashboard .inner svg {
+  width: 40px;
+  height: 40px;
+  margin-right: 10px; 
+}
+
+.dashboard .inner-content {
+  flex-grow: 1; 
+  margin-bottom: 20px;
+}
+
+.dashboard .title {
+  font-size: 18px;
+  margin-bottom: 5px;
+}
+
+.dashboard .subtitle {
+  font-size: 14px;
+  margin-top: 0;
+}
+
+.dashboard-title {
+  text-align: center; /* Center the title */
+  margin-bottom: 10px; /* Add some space between title and subtitle */
+}
+
+.dashboard-span {
+  text-align: center; /* Center the subtitle */
+  display: block; /* Ensure it occupies full width */
+  margin-bottom: 30px; /* Add some space below the subtitle */
+}
+
+.dashboard .div-link {
+  color: #fff;
+  text-decoration: none;
+}
+
+.dashboard .div-link:hover .inner {
+  background-color: #222222;
+}
+
+.dashboard {
+  margin-top: 70px;
+}
+
+@media (max-width: 768px) {
+  .dashboard .container {
+    margin-bottom: 455px;
+  }
 }

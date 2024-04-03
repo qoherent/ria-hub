@@ -1,8 +1,45 @@
-{{template "base/head" .}}
-<div role="main" aria-label="{{.Title}}" class="page-content dashboard feeds">
-	{{template "user/dashboard/navbar" .}}
+{{template "base/head_new" .}}
+	{{/*{{template "user/dashboard/navbar" .}}*/}}
+
+<div role="main" aria-label="{{.Title}}" class="page-content dashboard feeds main-content">
+
+	{{template "base/alert" .}}
+
+	<h1 class="dashboard-title">Welcome to RIA Hub!</h1>
+	<span class="dashboard-span">An all in one Radio Intelligent Platform.</span>
+
+		<div class="outer">
+			<a href="{{AppSubUrl}}/repo/create" class="div-link">
+				<div class="inner">
+					{{svg "octicon-list-unordered"}}
+					<div class="inner-content">
+					<h3 class="title">Make</h3>
+					<p class="subtitle">Projects are where you store your code, access issues, wiki and other features of RIA Hub.</p>
+					</div>
+				</div>
+			</a>
+			<a href="{{AppSubUrl}}/explore/repos" class="div-link">
+				<div class="inner">
+					{{svg "octicon-telescope"}}
+					<div class="inner-content">
+					<h3 class="title">Explore</h3>
+					<p class="subtitle">Public projects are an easy way to allow everyone to have read-only access.</p>
+					</div>
+				</div>
+			</a>
+			<a href="https://qoherent.github.io/ria/" target="blank" class="div-link">
+				<div class="inner">
+					{{svg "octicon-mortar-board"}}
+					<div class="inner-content">
+					<h3 class="title">Learn</h3>
+					<p class="subtitle">Take a look at the documentation to discover all of RIA Hub's capabilities.</p>
+					</div>
+				</div>
+			</a>
+		</div>
+
+	{{if .HeatmapData}}
 	<div class="ui container">
-		{{template "base/alert" .}}
 		<div class="ui mobile reversed stackable grid">
 			<div class="ui container ten wide column">
 				{{template "user/heatmap" .}}
@@ -11,5 +48,8 @@
 			{{template "user/dashboard/repolist" .}}
 		</div>
 	</div>
+	{{end}}
+
 </div>
+
 {{template "base/footer" .}}

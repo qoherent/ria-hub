@@ -604,6 +604,19 @@ img.ui.avatar,
   padding-bottom: 80px;
 }
 
+.page-content {
+  margin-top: 15px;
+  margin-left: 300px; /* Ensure main content starts after the navbar */
+  width: calc(100% - 300px);
+}
+
+@media screen and (max-width: 768px) {
+  .page-content {
+    margin-left: 0;
+    width: 100%;
+  }
+}
+
 /* add margin below .secondary nav when it is the first child */
 .page-content > :first-child.secondary-nav {
   margin-bottom: 14px;
