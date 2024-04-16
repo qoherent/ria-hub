@@ -15,6 +15,7 @@ import (
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/metrics"
 	"code.gitea.io/gitea/modules/public"
+	_ "code.gitea.io/gitea/modules/session" // to registers all internal adapters
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/storage"
 	"code.gitea.io/gitea/modules/structs"
@@ -24,6 +25,7 @@ import (
 	"code.gitea.io/gitea/modules/web/middleware"
 	"code.gitea.io/gitea/modules/web/routing"
 	"code.gitea.io/gitea/routers/common"
+	ria "code.gitea.io/gitea/routers/web/RIA"
 	"code.gitea.io/gitea/routers/web/admin"
 	"code.gitea.io/gitea/routers/web/auth"
 	"code.gitea.io/gitea/routers/web/devtest"
@@ -44,8 +46,6 @@ import (
 	"code.gitea.io/gitea/services/context"
 	"code.gitea.io/gitea/services/forms"
 	"code.gitea.io/gitea/services/lfs"
-
-	_ "code.gitea.io/gitea/modules/session" // to registers all internal adapters
 
 	"gitea.com/go-chi/captcha"
 	"github.com/NYTimes/gziphandler"
@@ -493,6 +493,16 @@ func registerRoutes(m *web.Route) {
 		}, explore.Code)
 		m.Get("/topics/search", explore.TopicSearch)
 	}, ignExploreSignIn)
+	m.Group("/ria", func() {
+		m.Get("", func(ctx *context.Context) {
+			ctx.Redirect(setting.AppSubURL + "/ria/navigation")
+		})
+		m.Get("/navigation", ria.Navigation)
+		m.Get("/config", ria.Config)
+		m.Get("/train", ria.Train)
+		m.Get("/both", ria.Both)
+	}, reqSignIn)
+
 	m.Group("/issues", func() {
 		m.Get("", user.Issues)
 		m.Get("/search", repo.SearchIssues)

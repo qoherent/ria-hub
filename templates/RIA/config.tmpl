@@ -1,0 +1,240 @@
+{{template "base/head_new" .}}
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File Upload with Editor</title>
+    <!-- Load Ace editor library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.9/ace.js" integrity="sha512-dcU9JDR8qh7+6yY3EU7CB5euTfcM2dWWnLmR+zzVQ5a5RQ3V9qw6Y1HflKo3YXdvJksCog7tmrbCviWS5NIOaA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <style>
+        #editor-config {
+            width: 100%;
+            min-height: 500px;
+            border: 1px solid #ccc;
+            margin-bottom: 10px;
+        }
+
+        button {
+            cursor: pointer;
+        }
+
+        #status {
+            padding: 10px;
+            color: white;
+            font-weight: bold;
+            border-radius: 5px;
+            width: fit-content;
+        }
+        .green {
+            background-color: green;
+        }
+        .red {
+            background-color: red;
+        }
+    </style>
+</head>
+<body>
+
+        <div role="main" aria-label="{{.Title}}" class="page-content main-content ui">
+
+            <a href="{{AppSubUrl}}/ria"><button>Back</button></a>
+
+            <p id="status" class="status">Loading...</p>
+
+            <h2>Edit or Upload YAML File</h2>
+            <!-- Ace editor container -->
+            <div id="editor-config"></div>
+            <input type="file" id="fileInput" accept=".yaml, .yml">
+            <button onclick="uploadFile()">Upload</button>
+
+        </div>
+
+    <script>
+        var editor = ace.edit("editor-config");
+        editor.setTheme("ace/theme/monokai");
+        editor.session.setMode("ace/mode/yaml");
+        editor.setValue(`1:
+    module: 'QDM'
+    command: 'ui_handler'
+    module_path: True
+    args: '-s 400 -l 128 -r -5 16 5 -d digital_mods_hpo.dat digital -c bpsk qpsk gfsk qam16'
+    post-tasks: ''
+1.1:
+    module: 'QDM'
+    command: 'ui_handler'
+    module_path: True
+    args: '-s 200 -l 128 -r -8 18 3 -d digital_mods_test.dat digital -c bpsk qpsk gfsk qam16'
+    post-tasks: ''
+2:
+    module: 'QDM/recording_curation/curator'
+    module_path: True
+    command: 'curator'
+    args: '-sdf ./dataset_files/digital_mods_hpo.dat -a 600 -t ./dataset_files/digital_mods_train_aug.dat'
+    post-tasks: ''
+    exclude_from_websocket: true
+3:
+    module: 'QMB'
+    command: 'preprocess'
+    args: '-d ./dataset_files/digital_mods_hpo.dat -s 0.9 -c ./QMB/signal_classification/train-default.yaml'
+    post-tasks: "" #'mv signal_classification/signal_dataset/ ./QMB/signal_classification/'
+3.1:
+    module: 'QMB'
+    module_path: True
+    command: 'signal_classification.hyperparameter_optimization.constrained_hyperparam_tuning'
+    args: '--config_file ./QMB/signal_classification/hyperparameter_optimization/hpo_config.yaml --n_trials 1000 --timeout 4 --sample_pct 0.2'
+    post-tasks: 'ls ./QMB/signal_classification/hyperparameter_optimization/results/'
+3.2:
+    module: 'QMB'
+    command: 'yaml_updater'
+    args: ' -s ./QMB/signal_classification/train-default.yaml -t ./QMB/signal_classification/train-tuned.yaml -r ./signal_classification/hyperparameter_optimization/results/'
+    post-tasks: 'ls ./QMB/signal_classification/*.yaml'
+3.28:
+    module: ''
+    command: ''
+    args: ''
+    post-tasks: 'mv ./signal_classification/signal_dataset/ ./signal_classification/hpo_dataset/'
+3.29:
+    module: 'QMB'
+    command: 'preprocess'
+    args: '-d ./dataset_files/digital_mods_train_aug.dat -s 0.7 -c ./QMB/signal_classification/train-default.yaml'
+    post-tasks: "" #'mv signal_classification/signal_dataset/ ./QMB/signal_classification/'
+3.3:
+    module: 'QMB'
+    module_path: True
+    command: 'signal_classification.train'
+    args: '--config_file ./QMB/signal_classification/train-tuned.yaml'
+    post-tasks: ''
+3.31:
+    module: ''
+    command: ''
+    args: ''
+    post-tasks: "mv ./label_encoder/* ./model_files/"
+3.32:
+    module: ''
+    command: ''
+    args: ''
+    post-tasks: 'mv ./models/* ./model_files/'
+3.33:
+    module: ''
+    command: ''
+    args: ''
+    post-tasks: 'cp ./QMB/signal_classification/train-tuned.yaml ./model_files/resnet_bs256.yaml'
+3.34:
+    module: ''
+    command: ''
+    args: ''
+    post-tasks: 'rm -rf ./models/ ./label_encoder/'
+3.35:
+    module: ''
+    command: ''
+    args: ''
+    post-tasks: 'mv ./signal_classification/signal_dataset/ ./signal_classification/training_dataset/'
+
+4:
+    module: 'QMT'
+    command: 'preprocess'
+    args: '-d ./dataset_files/digital_mods_test.dat -s 0.1 -c ./QMT/train-default.yaml'
+    post-tasks: 'stat signal_classification/signal_dataset/'
+4.1:
+    module: 'QMT'
+    command: 'tester'
+    module_path: True
+    args: '-c ./model_files/resnet_bs256.yaml'
+    post-tasks: ''
+4.2:
+    module: 'QMT'
+    command: 'inference_loop_module'
+    module_path: True
+    args: '-c ./model_files/resnet_bs256.yaml'
+    post-tasks: ''
+5:
+    module: None
+    command: None
+    args: None
+    post-tasks: 'echo "RIA execution complete!"'
+6:
+    module: ''
+    command: ''
+    args: ''
+    post-tasks: 'rm -rf signal_classification'`);
+
+        function uploadFile() {
+            const input = document.getElementById('fileInput');
+            const file = input.files[0];
+            
+            if (file) {
+                // If a file is selected, upload the file
+                uploadFileFromFileInput(file);
+            } else {
+                // If no file is selected, upload the content from the editor
+                uploadFileFromEditor();
+            }
+        }
+
+        function uploadFileFromFileInput(file) {
+            const formData = new FormData();
+            formData.append('config_file', file);
+
+            // Send FormData to the server
+            sendFormData(formData);
+        }
+
+        function uploadFileFromEditor() {
+            // Get YAML content from the editor
+            var yamlContent = editor.getValue();
+
+            // Convert YAML content to a Blob object
+            var yamlBlob = new Blob([yamlContent], { type: "text/yaml" });
+
+            // Create FormData object and append the Blob
+            var formData = new FormData();
+            formData.append("config_file", yamlBlob);
+
+            // Send FormData to the server
+            sendFormData(formData);
+        }
+
+        function sendFormData(formData) {
+            fetch("http://192.168.0.12:8000/run-instruction/", {
+                method: "POST",
+                body: formData
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error("Network response was not ok");
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log(data);
+                alert(data.message);
+            })
+            .catch(error => {
+                console.error("There was a problem with the fetch operation:", error);
+                alert("There was an error uploading the file.");
+            });
+        }
+
+         function getStatus() {
+            fetch('http://192.168.0.12:8000/status/', {
+                method: 'POST',
+            }) 
+            .then(response => {
+            if (response.ok) {
+                document.getElementById('status').textContent = 'RIA is running';
+                document.getElementById('status').className = 'status green';
+            }})
+            .catch(error => {
+                document.getElementById('status').textContent = 'RIA is not running';
+                document.getElementById('status').className = 'status red';
+            });
+        }
+
+        getStatus(); // Call immediately
+
+        // Call getStatus every 3 seconds
+        setInterval(getStatus, 3000);
+    </script>
+</body>
+
+{{template "base/footer" .}}

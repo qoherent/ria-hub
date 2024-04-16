@@ -1,0 +1,191 @@
+{{template "base/head_new" .}}
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File Upload with Editor</title>
+    <!-- Load Ace editor library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.9/ace.js" integrity="sha512-dcU9JDR8qh7+6yY3EU7CB5euTfcM2dWWnLmR+zzVQ5a5RQ3V9qw6Y1HflKo3YXdvJksCog7tmrbCviWS5NIOaA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <style>
+        #editor-train-default {
+            width: 100%;
+            min-height: 500px;
+            border: 1px solid #ccc;
+            margin-bottom: 10px;
+        }
+
+        button {
+            cursor: pointer;
+        }
+
+        #status {
+            padding: 10px;
+            color: white;
+            font-weight: bold;
+            border-radius: 5px;
+            width: fit-content;
+        }
+        .green {
+            background-color: green;
+        }
+        .red {
+            background-color: red;
+        }
+    </style>
+</head>
+<body>
+
+    <div role="main" aria-label="{{.Title}}" class="page-content main-content ui">
+        
+        <a href="{{AppSubUrl}}/ria"><button>Back</button></a>
+
+        <p id="status" class="status">Loading...</p>
+
+        <h2>Edit or Upload YAML File</h2>
+        <!-- Ace editor container -->
+        <div id="editor-train-default"></div>
+        <input type="file" id="fileInput" accept=".yaml, .yml">
+        <button onclick="uploadFile()">Upload</button>
+
+    </div>
+
+    <script>
+        var editor = ace.edit("editor-train-default");
+        editor.session.setMode("ace/mode/yaml");
+        editor.setTheme("ace/theme/monokai");
+        editor.setValue(`data:
+  x_train: "./signal_classification/signal_dataset/train/x_train.npy"
+  y_train: "./signal_classification/signal_dataset/train/y_train.npy"
+  x_val: "./signal_classification/signal_dataset/test/x_test.npy"
+  y_val: "./signal_classification/signal_dataset/test/y_test.npy"
+
+learner:
+  model: "resnet"
+  optimizer: "rangeradabelief"
+  fit_function: "fit_fc"
+  suffix: "bs256"
+  mixup: True
+  fp16: True 
+  n_epochs: 5
+  bs: 128
+  lr: 3e-4
+  pct_start: 0.3
+  beta1: 0.95
+  beta2: 0.999
+  wd: 1e-2
+  eps: 1e-8
+  patience: 10 # patience for early stopping
+  # min_loss_perc: 1. # removed for now, not using
+  # pretrained_weights: # path to pretrained weights, a .pth file
+
+# model specific configs
+resnet:
+  layers: 
+    - 3
+    - 4
+    - 6
+    - 3
+  groups: 1 # groups = 1 for standard resnet or 32 or resnext
+  width_per_group: 64 # groups = 64 for standard resnet or 4 for resnext
+  reduction: 16 # intermediate channel size for SE module (None to not use SE)
+  self_attention: True
+  expansion: 4 # either 1 or 4. if ==4, use bottleneck resblock
+
+inception:
+  reduction: 16 # intermediate channel size for SE module
+  self_attention: True 
+  attn_layer: 2
+  
+ts_transformer:
+  n_layers: 1
+  d_model: 256
+  learn_pe: True
+  pe: sincos
+  res_dropout: 0.
+  fc_dropout: 0.
+  
+mlp_mixer:
+  patch_size: 64
+`);
+
+        function uploadFile() {
+            const input = document.getElementById('fileInput');
+            const file = input.files[0];
+            
+            if (file) {
+                // If a file is selected, upload the file
+                uploadFileFromFileInput(file);
+            } else {
+                // If no file is selected, upload the content from the editor
+                uploadFileFromEditor();
+            }
+        }
+
+        function uploadFileFromFileInput(file) {
+            const formData = new FormData();
+            formData.append('train_default_file', file);
+
+            // Send FormData to the server
+            sendFormData(formData);
+        }
+
+        function uploadFileFromEditor() {
+            // Get YAML content from the editor
+            var yamlContent = editor.getValue();
+
+            // Convert YAML content to a Blob object
+            var yamlBlob = new Blob([yamlContent], { type: "text/yaml" });
+
+            // Create FormData object and append the Blob
+            var formData = new FormData();
+            formData.append("train_default_file", yamlBlob);
+
+            // Send FormData to the server
+            sendFormData(formData);
+        }
+
+        function sendFormData(formData) {
+            fetch("http://192.168.0.12:8000/run-instruction/", {
+                method: "POST",
+                body: formData
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error("Network response was not ok");
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log(data);
+                alert(data.message);
+            })
+            .catch(error => {
+                console.error("There was a problem with the fetch operation:", error);
+                alert("There was an error uploading the file.");
+            });
+        }
+
+         function getStatus() {
+            fetch('http://192.168.0.12:8000/status/', {
+                method: 'POST',
+            }) 
+            .then(response => {
+            if (response.ok) {
+                document.getElementById('status').textContent = 'RIA is running';
+                document.getElementById('status').className = 'status green';
+            }})
+            .catch(error => {
+                document.getElementById('status').textContent = 'RIA is not running';
+                document.getElementById('status').className = 'status red';
+            });
+        }
+
+        getStatus(); // Call immediately
+
+        // Call getStatus every 3 seconds
+        setInterval(getStatus, 3000);
+
+    </script>
+</body>
+
+{{template "base/footer" .}}

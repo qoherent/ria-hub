@@ -1,0 +1,29 @@
+.ria #status {
+    padding: 10px;
+    color: white;
+    font-weight: bold;
+    border-radius: 5px;
+    width: fit-content;
+}
+
+.ria .green {
+    background-color: green;
+}
+
+.ria .red {
+    background-color: red;
+}
+
+.ria #editor1, #editor2 {
+    width: 100%;
+    min-height: 500px;
+    border: 1px solid #ccc;
+    margin-bottom: 10px;
+}
+
+.ria #editor-train-default, #editor-config {
+    width: 100%;
+    min-height: 500px;
+    border: 1px solid #ccc;
+    margin-bottom: 10px;
+}

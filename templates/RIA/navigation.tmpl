@@ -1,0 +1,74 @@
+{{template "base/head_new" .}}
+
+<style>
+
+    #status {
+        padding: 10px;
+        color: white;
+        font-weight: bold;
+        border-radius: 5px;
+        width: fit-content;
+    }
+    .green {
+        background-color: green;
+    }
+    .red {
+        background-color: red;
+    }
+
+</style>
+
+<div role="main" aria-label="{{.Title}}" class="page-content main-content ui">
+
+    <p id="status" class="status">Loading...</p>
+
+	<a id="submitDefault"><button>Submit default</button></a>
+    <a href="config"><button>Edit Config File only</button></a>
+    <a href="train"><button>Edit Train Default File only</button></a>
+    <a href="both"><button>Edit both</button></a>
+
+</div>
+
+<script>
+    document.getElementById('submitDefault').addEventListener('click', function() {
+        // Make a POST request to the FastAPI endpoint
+        fetch('http://192.168.0.12:8000/run-instruction/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            console.log('POST request successful');
+        })
+        .catch(error => {
+            console.error('There was a problem with the POST request:', error);
+        });
+    });
+
+    function getStatus() {
+        fetch('http://192.168.0.12:8000/status/', {
+            method: 'POST',
+        }) 
+        .then(response => {
+        if (response.ok) {
+            document.getElementById('status').textContent = 'RIA is running';
+            document.getElementById('status').className = 'status green';
+        }})
+        .catch(error => {
+            document.getElementById('status').textContent = 'RIA is not running';
+            document.getElementById('status').className = 'status red';
+        });
+    }
+
+    getStatus(); // Call immediately
+
+    // Call getStatus every 3 seconds
+    setInterval(getStatus, 3000);
+    
+</script>
+
+{{template "base/footer" .}}
