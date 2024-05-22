@@ -15,6 +15,11 @@
     .red {
         background-color: red;
     }
+    #output {
+        height: 780px; /* Set a fixed height for the output container */
+        overflow-y: scroll; /* Enable vertical scrolling */
+        font-size: 20px;
+    }
 
 </style>
 
@@ -27,47 +32,64 @@
     <a href="train"><button>Edit Train Default File only</button></a>
     <a href="both"><button>Edit both</button></a>
 
+    <div id="output"></div>
+
 </div>
 
 <script>
-    document.getElementById('submitDefault').addEventListener('click', function() {
-        // Make a POST request to the FastAPI endpoint
-        fetch('http://192.168.0.12:8000/run-instruction/', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-        })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Network response was not ok');
-            }
-            console.log('POST request successful');
-        })
-        .catch(error => {
-            console.error('There was a problem with the POST request:', error);
-        });
-    });
+    const outputDiv = document.getElementById('output');
+        const connectButton = document.getElementById('submitDefault');
+        let ws;
 
-    function getStatus() {
-        fetch('http://192.168.0.12:8000/status/', {
-            method: 'POST',
-        }) 
-        .then(response => {
-        if (response.ok) {
-            document.getElementById('status').textContent = 'RIA is running';
-            document.getElementById('status').className = 'status green';
-        }})
-        .catch(error => {
-            document.getElementById('status').textContent = 'RIA is not running';
-            document.getElementById('status').className = 'status red';
-        });
-    }
+        function connectWebSocket() {
+            ws = new WebSocket("ws://192.168.0.106:8000/ws-run-instruction/");
 
-    getStatus(); // Call immediately
+            ws.onopen = function(event) {
+                outputDiv.innerHTML += "<p>WebSocket connection established.</p>";
+            };
 
-    // Call getStatus every 3 seconds
-    setInterval(getStatus, 3000);
+            ws.onmessage = function(event) {
+                const message = JSON.parse(event.data);
+                if (message.type === 'command') {
+                    outputDiv.innerHTML += `<p style="color: green;">${message.content}</p>`;
+                } else if (message.type === 'output') {
+                    outputDiv.innerHTML += `<p>${message.content}</p>`;
+                } else if (message.type === 'instruction') {
+                    outputDiv.innerHTML += `<p style="color: blue;">${message.content}</p>`;
+                } else if (message.type === 'error') {
+                    outputDiv.innerHTML += `<p style="color: red;">${message.content}</p>`;
+                } else if (message.type === 'message') {
+                    outputDiv.innerHTML += `<p>${message.content}</p>`;
+                }
+                // Scroll to the bottom of the output container
+                outputDiv.scrollTop = outputDiv.scrollHeight;
+            };
+
+            ws.onerror = function(error) {
+                outputDiv.innerHTML += `<p style="color: red;">WebSocket error: ${error}</p>`;
+            };
+
+            ws.onclose = function(event) {
+                outputDiv.innerHTML += "<p>WebSocket connection closed.</p>";
+            };
+        }
+
+        connectButton.addEventListener('click', connectWebSocket);
+
+        const statusDiv = document.getElementById('status');
+        const ws_status = new WebSocket('ws://192.168.0.106:8000/status/');
+
+        ws_status.onopen = function(event) {
+            statusDiv.textContent = 'Connected';
+        };
+
+        ws_status.onclose = function(event) {
+            statusDiv.textContent = 'Not Connected, refresh to reconnect';
+        };
+
+        ws_status.onerror = function(event) {
+            statusDiv.textContent = 'WebSocket error occurred';
+        };
     
 </script>
 

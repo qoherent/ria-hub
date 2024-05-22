@@ -26,6 +26,11 @@
         .red {
             background-color: red;
         }
+        #output {
+            height: 780px; /* Set a fixed height for the output container */
+            overflow-y: scroll; /* Enable vertical scrolling */
+            font-size: 20px;
+        }
     </style>
 </head>
 <body>
@@ -46,8 +51,12 @@
         <input type="file" id="file2" name="train_default_file" accept=".yaml,.yml"><br>
         <div id="editor2">Enter YAML content for Train Default File</div>
 
-        <button type="submit" id="submitBtn">Submit</button>
+        <button type="submit" id="uploadBtn">Upload Files</button>
     </form>
+
+    <button id="submitBtn">Start RIA Handler</button>
+
+    <div id="output"></div>
 
     </div>
 
@@ -55,18 +64,23 @@
         var editor1 = ace.edit("editor1");
         editor1.setTheme("ace/theme/monokai");
         editor1.getSession().setMode("ace/mode/yaml");
-        editor1.setValue(`1:
+        editor1.setValue(`# this example makes a training dataset, and an inference dataset, augments the training dataset, does an HPO run, trains a model, then tests on a new harder dataset it all in one go. 
+# todo - add impairment/diversity engine in curator step
+
+1:
     module: 'QDM'
     command: 'ui_handler'
     module_path: True
     args: '-s 400 -l 128 -r -5 16 5 -d digital_mods_hpo.dat digital -c bpsk qpsk gfsk qam16'
     post-tasks: ''
+    exclude_from_websocket: false
 1.1:
     module: 'QDM'
     command: 'ui_handler'
     module_path: True
     args: '-s 200 -l 128 -r -8 18 3 -d digital_mods_test.dat digital -c bpsk qpsk gfsk qam16'
     post-tasks: ''
+    exclude_from_websocket: false
 2:
     module: 'QDM/recording_curation/curator'
     module_path: True
@@ -79,86 +93,104 @@
     command: 'preprocess'
     args: '-d ./dataset_files/digital_mods_hpo.dat -s 0.9 -c ./QMB/signal_classification/train-default.yaml'
     post-tasks: "" #'mv signal_classification/signal_dataset/ ./QMB/signal_classification/'
+    exclude_from_websocket: false
 3.1:
     module: 'QMB'
     module_path: True
     command: 'signal_classification.hyperparameter_optimization.constrained_hyperparam_tuning'
     args: '--config_file ./QMB/signal_classification/hyperparameter_optimization/hpo_config.yaml --n_trials 1000 --timeout 4 --sample_pct 0.2'
     post-tasks: 'ls ./QMB/signal_classification/hyperparameter_optimization/results/'
+    exclude_from_websocket: false
 3.2:
     module: 'QMB'
     command: 'yaml_updater'
     args: ' -s ./QMB/signal_classification/train-default.yaml -t ./QMB/signal_classification/train-tuned.yaml -r ./signal_classification/hyperparameter_optimization/results/'
     post-tasks: 'ls ./QMB/signal_classification/*.yaml'
+    exclude_from_websocket: false
 3.28:
     module: ''
     command: ''
     args: ''
     post-tasks: 'mv ./signal_classification/signal_dataset/ ./signal_classification/hpo_dataset/'
+    exclude_from_websocket: false
 3.29:
     module: 'QMB'
     command: 'preprocess'
     args: '-d ./dataset_files/digital_mods_train_aug.dat -s 0.7 -c ./QMB/signal_classification/train-default.yaml'
     post-tasks: "" #'mv signal_classification/signal_dataset/ ./QMB/signal_classification/'
+    exclude_from_websocket: false
 3.3:
     module: 'QMB'
     module_path: True
     command: 'signal_classification.train'
     args: '--config_file ./QMB/signal_classification/train-tuned.yaml'
     post-tasks: ''
+    exclude_from_websocket: false
 3.31:
     module: ''
     command: ''
     args: ''
     post-tasks: "mv ./label_encoder/* ./model_files/"
+    exclude_from_websocket: false
 3.32:
     module: ''
     command: ''
     args: ''
     post-tasks: 'mv ./models/* ./model_files/'
+    exclude_from_websocket: false
 3.33:
     module: ''
     command: ''
     args: ''
     post-tasks: 'cp ./QMB/signal_classification/train-tuned.yaml ./model_files/resnet_bs256.yaml'
+    exclude_from_websocket: false
 3.34:
     module: ''
     command: ''
     args: ''
     post-tasks: 'rm -rf ./models/ ./label_encoder/'
+    exclude_from_websocket: false
 3.35:
     module: ''
     command: ''
     args: ''
     post-tasks: 'mv ./signal_classification/signal_dataset/ ./signal_classification/training_dataset/'
-
+    exclude_from_websocket: false
 4:
     module: 'QMT'
     command: 'preprocess'
     args: '-d ./dataset_files/digital_mods_test.dat -s 0.1 -c ./QMT/train-default.yaml'
     post-tasks: 'stat signal_classification/signal_dataset/'
+    exclude_from_websocket: false
 4.1:
     module: 'QMT'
     command: 'tester'
     module_path: True
     args: '-c ./model_files/resnet_bs256.yaml'
     post-tasks: ''
+    exclude_from_websocket: false
+
 4.2:
     module: 'QMT'
     command: 'inference_loop_module'
     module_path: True
     args: '-c ./model_files/resnet_bs256.yaml'
     post-tasks: ''
+    exclude_from_websocket: false
+
 5:
     module: None
     command: None
     args: None
     post-tasks: 'echo "RIA execution complete!"'
+    exclude_from_websocket: false
+
 6:
     module: ''
     command: ''
     args: ''
-    post-tasks: 'rm -rf signal_classification'`)
+    post-tasks: 'rm -rf signal_classification'
+`)
 
         var editor2 = ace.edit("editor2");
         editor2.setTheme("ace/theme/monokai");
@@ -218,67 +250,116 @@ mlp_mixer:
   patch_size: 64
 `)
 
-        document.getElementById('uploadForm').addEventListener('submit', function (event) {
-            event.preventDefault();
+    document.getElementById('uploadForm').addEventListener('submit', function (event) {
+        event.preventDefault();
 
-            var formData = new FormData(this);
+        var formData = new FormData(this);
 
-            // If both files are not uploaded, use content from Ace editors
-            if (!document.getElementById('file1').files.length && document.getElementById('file2').files.length) {
-                alert("Please upload config file.");
-            } else if (document.getElementById('file1').files.length && !document.getElementById('file2').files.length) {
-                alert("Please upload train default file.");
-            } else if (document.getElementById('file1').files.length && document.getElementById('file2').files.length) {
-                fetch('http://192.168.0.12:8000/run-instruction/', {
-                    method: 'POST',
-                    body: formData
-                })
-                .then(response => response.json())
-                .then(data => {
-                    console.log(data);
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    alert("There was an error uploading the file.");
-                });  
-            } else {
-                formData.append('config_file', new Blob([editor1.getValue()], { type: 'text/yaml' }), 'config_file.yaml');
-                formData.append('train_default_file', new Blob([editor2.getValue()], { type: 'text/yaml' }), 'train_default_file.yaml');
-            
-                fetch('http://192.168.0.12:8000/run-instruction/', {
-                    method: 'POST',
-                    body: formData
-                })
-                .then(response => response.json())
-                .then(data => {
-                    console.log(data);
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    alert("There was an error uploading the file.");
-                });   
-            }
+        // If both files are not uploaded, use content from Ace editors
+        if (!document.getElementById('file1').files.length && document.getElementById('file2').files.length) {
+            alert("Please upload config file.");
+        } else if (document.getElementById('file1').files.length && !document.getElementById('file2').files.length) {
+            alert("Please upload train default file.");
+        } else if (document.getElementById('file1').files.length && document.getElementById('file2').files.length) {
+            fetch('http://192.168.0.12:8000/run-instruction/', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log(data);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert("There was an error uploading the file.");
+            });  
+        } else {
+            formData.append('config_file', new Blob([editor1.getValue()], { type: 'text/yaml' }), 'config_file.yaml');
+            formData.append('train_default_file', new Blob([editor2.getValue()], { type: 'text/yaml' }), 'train_default_file.yaml');
+        
+            fetch('http://192.168.0.106:8000/receive-files/', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log(data);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert("There was an error uploading the file.");
+            });   
+        }
+    });
+
+    const submitBtn = document.getElementById('submitBtn');
+
+    submitBtn.addEventListener('click', function() {
+        const socket = new WebSocket('ws://192.168.0.106:8000/ws-run-instruction/');
+        const outputDiv = document.getElementById('output');
+
+        // Handle WebSocket open event
+        socket.addEventListener('open', function (event) {
+            console.log('WebSocket connected');
         });
 
-         function getStatus() {
-            fetch('http://192.168.0.12:8000/status/', {
-                method: 'POST',
-            }) 
-            .then(response => {
-            if (response.ok) {
-                document.getElementById('status').textContent = 'RIA is running';
-                document.getElementById('status').className = 'status green';
-            }})
-            .catch(error => {
-                document.getElementById('status').textContent = 'RIA is not running';
-                document.getElementById('status').className = 'status red';
-            });
-        }
+        socket.onmessage = function(event) {
+            const message = JSON.parse(event.data);
+            if (message.type === 'command') {
+                outputDiv.innerHTML += `<p style="color: green;">${message.content}</p>`;
+            } else if (message.type === 'output') {
+                outputDiv.innerHTML += `<p>${message.content}</p>`;
+            } else if (message.type === 'instruction') {
+                outputDiv.innerHTML += `<p style="color: blue;">${message.content}</p>`;
+            } else if (message.type === 'error') {
+                outputDiv.innerHTML += `<p style="color: red;">${message.content}</p>`;
+            } else if (message.type === 'message') {
+                outputDiv.innerHTML += `<p>${message.content}</p>`;
+            }
+            // Scroll to the bottom of the output container
+            outputDiv.scrollTop = outputDiv.scrollHeight;
+        };
 
-        getStatus(); // Call immediately
+        socket.onerror = function(error) {
+            outputDiv.innerHTML += `<p style="color: red;">WebSocket error: ${error}</p>`;
+        };
 
-        // Call getStatus every 3 seconds
-        setInterval(getStatus, 3000);
+        socket.onclose = function(event) {
+            outputDiv.innerHTML += "<p>WebSocket connection closed.</p>";
+        };
+
+        const statusDiv = document.getElementById('status');
+        const ws_status = new WebSocket('ws://192.168.0.106:8000/status/');
+
+        console.log(ws_status)
+
+        ws_status.onopen = function(event) {
+            statusDiv.textContent = 'Connected';
+        };
+
+        ws_status.onclose = function(event) {
+            statusDiv.textContent = 'Not Connected';
+        };
+
+        ws_status.onerror = function(event) {
+            statusDiv.textContent = 'WebSocket error occurred';
+        };
+    });
+
+    const statusDiv = document.getElementById('status');
+    const ws_status = new WebSocket('ws://192.168.0.106:8000/status/');
+
+    ws_status.onopen = function(event) {
+        statusDiv.textContent = 'Connected';
+    };
+
+    ws_status.onclose = function(event) {
+        statusDiv.textContent = 'Not Connected, refresh to reconnect';
+    };
+
+    ws_status.onerror = function(event) {
+        statusDiv.textContent = 'WebSocket error occurred';
+    };
     </script>
 </body>
 
