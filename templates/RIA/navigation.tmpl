@@ -20,7 +20,42 @@
         overflow-y: scroll; /* Enable vertical scrolling */
         font-size: 20px;
     }
+        .terminal {
+            margin-top: 5vh;
+            width: 70%;
+            height: 500px;
+            background-color: #000000;
+            padding: 20px;
+            border-radius: 10px;
+            overflow-y: auto;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+            margin: auto;
+        }
 
+        .terminal p {
+            margin: 0;
+            line-height: 1.5;
+        }
+
+        .terminal p.command {
+            color: green;
+        }
+
+        .terminal p.output {
+            color: white;
+        }
+
+        .terminal p.instruction {
+            color: blue;
+        }
+
+        .terminal p.error {
+            color: red;
+        }
+
+        .terminal p.message {
+            color: white;
+        }
 </style>
 
 <div role="main" aria-label="{{.Title}}" class="page-content main-content ui">
@@ -32,12 +67,12 @@
     <a href="train"><button>Edit Train Default File only</button></a>
     <a href="both"><button>Edit both</button></a>
 
-    <div id="output"></div>
+        <div id="terminal" class="terminal"></div>
 
 </div>
 
 <script>
-    const outputDiv = document.getElementById('output');
+    const terminalDiv = document.getElementById('terminal');
         const connectButton = document.getElementById('submitDefault');
         let ws;
 
@@ -49,25 +84,30 @@
             };
 
             ws.onmessage = function(event) {
-                const message = JSON.parse(event.data);
-                if (message.type === 'command') {
-                    outputDiv.innerHTML += `<p style="color: green;">${message.content}</p>`;
-                } else if (message.type === 'output') {
-                    outputDiv.innerHTML += `<p>${message.content}</p>`;
-                } else if (message.type === 'instruction') {
-                    outputDiv.innerHTML += `<p style="color: blue;">${message.content}</p>`;
-                } else if (message.type === 'error') {
-                    outputDiv.innerHTML += `<p style="color: red;">${message.content}</p>`;
-                } else if (message.type === 'message') {
-                    outputDiv.innerHTML += `<p>${message.content}</p>`;
-                }
-                // Scroll to the bottom of the output container
-                outputDiv.scrollTop = outputDiv.scrollHeight;
-            };
+            const message = JSON.parse(event.data);
+            let messageElement = document.createElement('p');
 
-            ws.onerror = function(error) {
-                outputDiv.innerHTML += `<p style="color: red;">WebSocket error: ${error}</p>`;
-            };
+            if (message.type === 'command') {
+                messageElement.className = 'command';
+            } else if (message.type === 'output') {
+                messageElement.className = 'output';
+            } else if (message.type === 'instruction') {
+                messageElement.className = 'instruction';
+            } else if (message.type === 'error') {
+                messageElement.className = 'error';
+            } else if (message.type === 'message') {
+                messageElement.className = 'message';
+            }
+
+            messageElement.textContent = message.content;
+            terminalDiv.appendChild(messageElement);
+
+            // Scroll to the bottom of the terminal
+            terminalDiv.scrollTo({
+                top: terminalDiv.scrollHeight,
+                behavior: 'smooth'
+            });
+        };
 
             ws.onclose = function(event) {
                 outputDiv.innerHTML += "<p>WebSocket connection closed.</p>";
