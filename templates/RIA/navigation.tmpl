@@ -15,23 +15,35 @@
     .red {
         background-color: red;
     }
+    .yellow {
+        background-color: yellow;
+    }
     #output {
         height: 780px; /* Set a fixed height for the output container */
         overflow-y: scroll; /* Enable vertical scrolling */
         font-size: 20px;
     }
         .terminal {
+            display: none;
             margin-top: 5vh;
             width: 70%;
-            height: 500px;
+            height: 300px;
+            min-height: 200px;
+            max-height: 700px;
             background-color: #000000;
             padding: 20px;
             border-radius: 10px;
             overflow-y: auto;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
             margin: auto;
+            margin-top: 5vh;
+            margin-bottom: 5vh;
+            padding-bottom: 5vh;
+            resize: vertical;
         }
-
+        .terminal-show {
+            display: block;
+        }
         .terminal p {
             margin: 0;
             line-height: 1.5;
@@ -67,70 +79,90 @@
     <a href="train"><button>Edit Train Default File only</button></a>
     <a href="both"><button>Edit both</button></a>
 
-        <div id="terminal" class="terminal"></div>
+    <div id="terminal" class="terminal"></div>
 
 </div>
 
 <script>
     const terminalDiv = document.getElementById('terminal');
-        const connectButton = document.getElementById('submitDefault');
-        let ws;
+    const submitBtn = document.getElementById('submitDefault');
 
-        function connectWebSocket() {
-            ws = new WebSocket("ws://192.168.0.106:8000/ws-run-instruction/");
+    submitBtn.addEventListener('click', function() {
+        const terminalDiv = document.getElementById('terminal');
+        const socket = new WebSocket('ws://192.168.0.106:8000/ws-run-instruction/');
+        terminalDiv.classList.add('terminal-show');
+        let messageElement = document.createElement('p');
+        messageElement.className = 'instruction';
+        messageElement.textContent = 'Connecting...'
+        terminalDiv.appendChild(messageElement)
 
-            ws.onopen = function(event) {
-                outputDiv.innerHTML += "<p>WebSocket connection established.</p>";
-            };
-
-            ws.onmessage = function(event) {
-            const message = JSON.parse(event.data);
-            let messageElement = document.createElement('p');
-
-            if (message.type === 'command') {
-                messageElement.className = 'command';
-            } else if (message.type === 'output') {
-                messageElement.className = 'output';
-            } else if (message.type === 'instruction') {
-                messageElement.className = 'instruction';
-            } else if (message.type === 'error') {
-                messageElement.className = 'error';
-            } else if (message.type === 'message') {
-                messageElement.className = 'message';
-            }
-
-            messageElement.textContent = message.content;
-            terminalDiv.appendChild(messageElement);
-
-            // Scroll to the bottom of the terminal
-            terminalDiv.scrollTo({
-                top: terminalDiv.scrollHeight,
-                behavior: 'smooth'
+        // Handle WebSocket open event
+        socket.addEventListener('open', function (event) {
+            window.scrollTo({
+                top: document.body.scrollHeight,
+                behavior: 'smooth' 
             });
-        };
+            let messageElement = document.createElement('p');
+            messageElement.className = 'command';
+            messageElement.textContent = 'Connected'
+            terminalDiv.appendChild(messageElement)
+        });
 
-            ws.onclose = function(event) {
-                outputDiv.innerHTML += "<p>WebSocket connection closed.</p>";
-            };
+        socket.addEventListener('close', function (event) {
+            window.scrollTo({
+                top: document.body.scrollHeight,
+                behavior: 'smooth' 
+            });
+            let messageElement = document.createElement('p');
+            messageElement.className = 'error';
+            messageElement.textContent = 'Unable to Connect, is RIA Handler running?'
+            terminalDiv.appendChild(messageElement)
+        });
+
+
+        socket.onmessage = function(event) {
+        const message = JSON.parse(event.data);
+        let messageElement = document.createElement('p');
+
+        if (message.type === 'command') {
+            messageElement.className = 'command';
+        } else if (message.type === 'output') {
+            messageElement.className = 'output';
+        } else if (message.type === 'instruction') {
+            messageElement.className = 'instruction';
+        } else if (message.type === 'error') {
+            messageElement.className = 'error';
+        } else if (message.type === 'message') {
+            messageElement.className = 'message';
         }
 
-        connectButton.addEventListener('click', connectWebSocket);
+        messageElement.textContent = message.content;
+        terminalDiv.appendChild(messageElement);
 
-        const statusDiv = document.getElementById('status');
-        const ws_status = new WebSocket('ws://192.168.0.106:8000/status/');
-
-        ws_status.onopen = function(event) {
-            statusDiv.textContent = 'Connected';
+        // Scroll to the bottom of the terminal
+        terminalDiv.scrollTo({
+            top: terminalDiv.scrollHeight,
+            behavior: 'smooth'
+        });
         };
+    })
 
-        ws_status.onclose = function(event) {
-            statusDiv.textContent = 'Not Connected, refresh to reconnect';
-        };
+    const statusDiv = document.getElementById('status');
+    const ws_status = new WebSocket('ws://192.168.0.106:8000/status/');
 
-        ws_status.onerror = function(event) {
-            statusDiv.textContent = 'WebSocket error occurred';
-        };
-    
+    ws_status.onopen = function(event) {
+        statusDiv.textContent = 'Connected';
+        statusDiv.classList.add('green');
+    };
+
+    ws_status.onclose = function(event) {
+        statusDiv.textContent = 'Not Connected, refresh to reconnect';
+        statusDiv.classList.add('red');
+    };
+
+    ws_status.onerror = function(event) {
+        statusDiv.textContent = 'WebSocket error occurred';
+    };
 </script>
 
 {{template "base/footer" .}}

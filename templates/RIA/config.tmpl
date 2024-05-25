@@ -31,21 +31,34 @@
         .red {
             background-color: red;
         }
+        .yellow {
+            background-color: yellow;
+        }
         #output {
             height: 780px; /* Set a fixed height for the output container */
             overflow-y: scroll; /* Enable vertical scrolling */
             font-size: 20px;
         }
         .terminal {
+            display: none;
             margin-top: 5vh;
             width: 70%;
-            height: 500px;
+            height: 300px;
+            min-height: 200px;
+            max-height: 700px;            
             background-color: #000000;
             padding: 20px;
             border-radius: 10px;
             overflow-y: auto;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
             margin: auto;
+            margin-top: 5vh;
+            margin-bottom: 5vh;
+            padding-bottom: 5vh;
+            resize: vertical;
+        }
+        .terminal-show {
+            display: block;
         }
 
         .terminal p {
@@ -273,22 +286,49 @@
                 }
                 return response.json();
             })
+            .then(data => {
+                alert("File uploaded successfully!")
+            })
             .catch(error => {
                 console.error("There was a problem with the fetch operation:", error);
-                alert("There was an error uploading the file.");
+                alert("There was an error uploading the file, is RIA Handler running?");
             });
         }
 
         const submitBtn = document.getElementById('submitBtn');
+        const socket = new WebSocket('ws://192.168.0.106:8000/ws-run-instruction/');
 
         submitBtn.addEventListener('click', function() {
-            const socket = new WebSocket('ws://192.168.0.106:8000/ws-run-instruction/');
-            const terminalDiv = document.getElementById('terminal');
+        const terminalDiv = document.getElementById('terminal');
 
-            // Handle WebSocket open event
-            socket.addEventListener('open', function (event) {
-                console.log('WebSocket connected');
+        terminalDiv.classList.add('terminal-show');
+        let messageElement = document.createElement('p');
+        messageElement.className = 'instruction';
+        messageElement.textContent = 'Connecting...'
+        terminalDiv.appendChild(messageElement)
+
+        // Handle WebSocket open event
+        socket.addEventListener('open', function (event) {
+            window.scrollTo({
+                top: document.body.scrollHeight,
+                behavior: 'smooth' 
             });
+            let messageElement = document.createElement('p');
+            messageElement.className = 'command';
+            messageElement.textContent = 'Connected'
+            terminalDiv.appendChild(messageElement)
+        });
+
+        socket.addEventListener('close', function (event) {
+            window.scrollTo({
+                top: document.body.scrollHeight,
+                behavior: 'smooth' 
+            });
+            let messageElement = document.createElement('p');
+            messageElement.className = 'error';
+            messageElement.textContent = 'Unable to Connect, is RIA Handler running?'
+            terminalDiv.appendChild(messageElement)
+        });
 
             socket.onmessage = function(event) {
             const message = JSON.parse(event.data);
@@ -326,10 +366,12 @@
 
         ws_status.onopen = function(event) {
             statusDiv.textContent = 'Connected';
+            statusDiv.classList.add('green');
         };
 
         ws_status.onclose = function(event) {
             statusDiv.textContent = 'Not Connected, refresh to reconnect';
+            statusDiv.classList.add('red');
         };
 
         ws_status.onerror = function(event) {

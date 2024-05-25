@@ -26,17 +26,29 @@
         .red {
             background-color: red;
         }
-
+        .yellow {
+                background-color: yellow;
+            }
         .terminal {
+            display: none;
             margin-top: 5vh;
             width: 70%;
-            height: 500px;
+            height: 300px;
+            min-height: 200px;
+            max-height: 700px;            
             background-color: #000000;
             padding: 20px;
             border-radius: 10px;
             overflow-y: auto;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
             margin: auto;
+            margin-top: 5vh;
+            margin-bottom: 5vh;
+            padding-bottom: 5vh;
+            resize: vertical;
+        }
+        .terminal-show {
+            display: block;
         }
 
         .terminal p {
@@ -299,11 +311,11 @@ mlp_mixer:
             })
             .then(response => response.json())
             .then(data => {
-                console.log(data);
+                alert("The files were uploaded successfully")
             })
             .catch(error => {
                 console.error('Error:', error);
-                alert("There was an error uploading the file.");
+                alert("There was an error uploading the file, is RIA Handler running?");
             });  
         } else {
             formData.append('config_file', new Blob([editor1.getValue()], { type: 'text/yaml' }), 'config_file.yaml');
@@ -315,11 +327,11 @@ mlp_mixer:
             })
             .then(response => response.json())
             .then(data => {
-                console.log(data);
+                alert("The files were uploaded successfully!")
             })
             .catch(error => {
                 console.error('Error:', error);
-                alert("There was an error uploading the file.");
+                alert("There was an error uploading the files, is RIA Handler running?");
             });   
         }
     });
@@ -327,12 +339,35 @@ mlp_mixer:
     const submitBtn = document.getElementById('submitBtn');
 
     submitBtn.addEventListener('click', function() {
-        const socket = new WebSocket('ws://192.168.0.106:8000/ws-run-instruction/');
         const terminalDiv = document.getElementById('terminal');
+        const socket = new WebSocket('ws://192.168.0.106:8000/ws-run-instruction/');
+        terminalDiv.classList.add('terminal-show');
+        let messageElement = document.createElement('p');
+        messageElement.className = 'instruction';
+        messageElement.textContent = 'Connecting...'
+        terminalDiv.appendChild(messageElement)
 
         // Handle WebSocket open event
         socket.addEventListener('open', function (event) {
-            console.log('WebSocket connected');
+            window.scrollTo({
+                top: document.body.scrollHeight,
+                behavior: 'smooth' 
+            });
+            let messageElement = document.createElement('p');
+            messageElement.className = 'command';
+            messageElement.textContent = 'Connected'
+            terminalDiv.appendChild(messageElement)
+        });
+
+        socket.addEventListener('close', function (event) {
+            window.scrollTo({
+                top: document.body.scrollHeight,
+                behavior: 'smooth' 
+            });
+            let messageElement = document.createElement('p');
+            messageElement.className = 'error';
+            messageElement.textContent = 'Unable to Connect, is RIA Handler running?'
+            terminalDiv.appendChild(messageElement)
         });
 
 
@@ -389,10 +424,12 @@ mlp_mixer:
 
     ws_status.onopen = function(event) {
         statusDiv.textContent = 'Connected';
+        statusDiv.classList.add('green');
     };
 
     ws_status.onclose = function(event) {
         statusDiv.textContent = 'Not Connected, refresh to reconnect';
+        statusDiv.classList.add('red');
     };
 
     ws_status.onerror = function(event) {
