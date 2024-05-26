@@ -114,8 +114,8 @@
                 behavior: 'smooth' 
             });
             let messageElement = document.createElement('p');
-            messageElement.className = 'error';
-            messageElement.textContent = 'Unable to Connect, is RIA Handler running?'
+            messageElement.className = 'command';
+            messageElement.textContent = 'WebSocket connection is closed, to run RIA Handler, make sure the server is up by checking the status at the top then click the "Start RIA Handler" button'
             terminalDiv.appendChild(messageElement)
         });
 

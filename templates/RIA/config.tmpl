@@ -41,11 +41,10 @@
         }
         .terminal {
             display: none;
-            margin-top: 5vh;
             width: 70%;
             height: 300px;
             min-height: 200px;
-            max-height: 700px;            
+            max-height: 700px;
             background-color: #000000;
             padding: 20px;
             border-radius: 10px;
@@ -90,7 +89,7 @@
 <body>
 
     <div role="main" aria-label="{{.Title}}" class="page-content main-content ui">
-
+        
         <a href="{{AppSubUrl}}/ria"><button>Back</button></a>
 
         <p id="status" class="status">Loading...</p>
@@ -108,8 +107,8 @@
 
     <script>
         var editor = ace.edit("editor-config");
-        editor.setTheme("ace/theme/monokai");
         editor.session.setMode("ace/mode/yaml");
+        editor.setTheme("ace/theme/monokai");
         editor.setValue(`# this example makes a training dataset, and an inference dataset, augments the training dataset, does an HPO run, trains a model, then tests on a new harder dataset it all in one go. 
 # todo - add impairment/diversity engine in curator step
 
@@ -296,11 +295,10 @@
         }
 
         const submitBtn = document.getElementById('submitBtn');
-        const socket = new WebSocket('ws://192.168.0.106:8000/ws-run-instruction/');
 
         submitBtn.addEventListener('click', function() {
         const terminalDiv = document.getElementById('terminal');
-
+        const socket = new WebSocket('ws://192.168.0.106:8000/ws-run-instruction/');
         terminalDiv.classList.add('terminal-show');
         let messageElement = document.createElement('p');
         messageElement.className = 'instruction';
@@ -325,8 +323,8 @@
                 behavior: 'smooth' 
             });
             let messageElement = document.createElement('p');
-            messageElement.className = 'error';
-            messageElement.textContent = 'Unable to Connect, is RIA Handler running?'
+            messageElement.className = 'command';
+            messageElement.textContent = 'WebSocket connection is closed, to run RIA Handler, make sure the server is up by checking the status at the top then click the "Start RIA Handler" button'
             terminalDiv.appendChild(messageElement)
         });
 
@@ -356,9 +354,6 @@
             });
         };
 
-            socket.onclose = function(event) {
-                terminalDiv.appendChild += "<p>WebSocket connection closed.</p>";
-            };
         });
 
         const statusDiv = document.getElementById('status');
@@ -377,7 +372,6 @@
         ws_status.onerror = function(event) {
             statusDiv.textContent = 'WebSocket error occurred';
         };
-
     </script>
 </body>
 
