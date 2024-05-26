@@ -275,7 +275,7 @@
         }
 
         function sendFormData(formData) {
-            fetch("http://192.168.0.106:8000/receive-files/", {
+            fetch("http://192.168.0.35:8000/receive-files/", {
                 method: "POST",
                 body: formData
             })
@@ -298,7 +298,7 @@
 
         submitBtn.addEventListener('click', function() {
         const terminalDiv = document.getElementById('terminal');
-        const socket = new WebSocket('ws://192.168.0.106:8000/ws-run-instruction/');
+        const socket = new WebSocket('ws://192.168.0.35:8000/ws-run-instruction/');
         terminalDiv.classList.add('terminal-show');
         let messageElement = document.createElement('p');
         messageElement.className = 'instruction';
@@ -357,7 +357,7 @@
         });
 
         const statusDiv = document.getElementById('status');
-        const ws_status = new WebSocket('ws://192.168.0.106:8000/status/');
+        const ws_status = new WebSocket('ws://192.168.0.35:8000/status/');
 
         ws_status.onopen = function(event) {
             statusDiv.textContent = 'Connected';
