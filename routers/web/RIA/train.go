@@ -11,13 +11,15 @@ import (
 )
 
 const (
-	// tplHelloWorld represents the hello world template
 	tplTrain base.TplName = "RIA/train"
 )
 
-// HelloWorld renders the hello world page
 func Train(ctx *context.Context) {
 	// Render the template directly
 	ctx.Data["Title"] = ctx.Locale.TrString("ria_train")
+	newRepoURL := ctx.FormString("newRepoURL")
+	if newRepoURL != "" {
+		ctx.Data["NewRepoURL"] = newRepoURL
+	}
 	ctx.HTML(http.StatusOK, tplTrain)
 }

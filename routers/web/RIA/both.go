@@ -19,5 +19,9 @@ const (
 func Both(ctx *context.Context) {
 	// Render the template directly
 	ctx.Data["Title"] = ctx.Locale.TrString("ria_both")
+	newRepoURL := ctx.FormString("newRepoURL")
+	if newRepoURL != "" {
+		ctx.Data["NewRepoURL"] = newRepoURL
+	}
 	ctx.HTML(http.StatusOK, tplBoth)
 }

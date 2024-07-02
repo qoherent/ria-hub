@@ -492,8 +492,10 @@ func registerRoutes(m *web.Route) {
 	}, ignExploreSignIn)
 	m.Group("/ria", func() {
 		m.Get("", func(ctx *context.Context) {
-			ctx.Redirect(setting.AppSubURL + "/ria/navigation")
+			ctx.Redirect(setting.AppSubURL + "/ria/createproject")
 		})
+		m.Get("/createproject", repo.CreateOther)
+		m.Post("/createproject", web.Bind(forms.CreateRepoForm{}), repo.CreatePostOther)
 		m.Get("/navigation", ria.Navigation)
 		m.Get("/config", ria.Config)
 		m.Get("/train", ria.Train)

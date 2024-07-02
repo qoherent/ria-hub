@@ -1,0 +1,122 @@
+{{template "base/head_new" .}}
+
+<div role="main" aria-label="{{.Title}}" class="page-content repository new repo">
+
+	<div class="ui middle very relaxed page one column grid">
+		<div class="column">
+			<form class="ui form" action="{{.Link}}" id="createRepoForm" method="post">
+				{{$.CsrfTokenHtml}}
+				<h3 class="ui top attached header">
+					New RIA Project
+				</h3>
+				<div class="ui attached segment">
+					{{template "base/alert" .}}
+
+					{{if .NewRepoURL}}
+						<div class="ui positive message">
+							<p>Repository created successfully: <a href="{{.NewRepoURL}}">{{.NewRepoURL}}</a></p>
+						</div>
+					{{end}}
+
+                    {{if not $.DisableMigrations}}
+                        <p class="ui center">Initialize a new RIA project, then run the RIA workflow and all created objects will be added automatically!</p>
+                    {{end}}
+					{{if not .CanCreateRepo}}
+						<div class="ui negative message">
+							<p>{{ctx.Locale.TrN .MaxCreationLimit "repo.form.reach_limit_of_creation_1" "repo.form.reach_limit_of_creation_n" .MaxCreationLimit}}</p>
+						</div>
+					{{end}}
+					<div class="inline required field {{if .Err_Owner}}error{{end}}">
+						<label>{{ctx.Locale.Tr "repo.owner"}}</label>
+						<div class="ui selection owner dropdown">
+							<input type="hidden" id="uid" name="uid" value="{{.ContextUser.ID}}" required>
+							<span class="text truncated-item-container" title="{{.ContextUser.Name}}">
+								{{ctx.AvatarUtils.Avatar .ContextUser 28 "mini"}}
+								<span class="truncated-item-name">{{.ContextUser.ShortName 40}}</span>
+							</span>
+							{{svg "octicon-triangle-down" 14 "dropdown icon"}}
+							<div class="menu">
+								<div class="item truncated-item-container" data-value="{{.SignedUser.ID}}" title="{{.SignedUser.Name}}">
+									{{ctx.AvatarUtils.Avatar .SignedUser 28 "mini"}}
+									<span class="truncated-item-name">{{.SignedUser.ShortName 40}}</span>
+								</div>
+								{{range .Orgs}}
+									<div class="item truncated-item-container" data-value="{{.ID}}" title="{{.Name}}">
+										{{ctx.AvatarUtils.Avatar . 28 "mini"}}
+										<span class="truncated-item-name">{{.ShortName 40}}</span>
+									</div>
+								{{end}}
+							</div>
+						</div>
+						<span class="help">{{ctx.Locale.Tr "repo.owner_helper"}}</span>
+					</div>
+
+					<div class="inline required field {{if .Err_RepoName}}error{{end}}">
+						<label for="repo_name">{{ctx.Locale.Tr "repo.repo_name"}}</label>
+						<input id="repo_name" name="repo_name" value="{{.repo_name}}" autofocus required maxlength="100">
+						<span class="help">{{ctx.Locale.Tr "repo.repo_name_helper"}}</span>
+					</div>
+					<div class="inline field">
+						<label>{{ctx.Locale.Tr "repo.template"}}</label>
+						<div id="repo_template_search" class="ui search normal selection dropdown">
+							<input type="hidden" id="repo_template" name="repo_template" value="{{.repo_template}}">
+							<div class="default text">{{.repo_template_name}}</div>
+							<div class="menu">
+							</div>
+						</div>
+					</div>
+
+					<div id="template_units" class="tw-hidden">
+						<div class="inline field">
+							<label>{{ctx.Locale.Tr "repo.template.items"}}</label>
+							<div class="ui checkbox">
+								<input name="git_content" type="checkbox" {{if .git_content}}checked{{end}}>
+								<label>{{ctx.Locale.Tr "repo.template.git_content"}}</label>
+							</div>
+							<div class="ui checkbox" {{if not .SignedUser.CanEditGitHook}}data-tooltip-content="{{ctx.Locale.Tr "repo.template.git_hooks_tooltip"}}"{{end}}>
+								<input name="git_hooks" type="checkbox" {{if .git_hooks}}checked{{end}}>
+								<label>{{ctx.Locale.Tr "repo.template.git_hooks"}}</label>
+							</div>
+						</div>
+						<div class="inline field">
+							<label></label>
+							<div class="ui checkbox">
+								<input name="webhooks" type="checkbox" {{if .webhooks}}checked{{end}}>
+								<label>{{ctx.Locale.Tr "repo.template.webhooks"}}</label>
+							</div>
+							<div class="ui checkbox">
+								<input name="topics" type="checkbox" {{if .topics}}checked{{end}}>
+								<label>{{ctx.Locale.Tr "repo.template.topics"}}</label>
+							</div>
+						</div>
+					</div>
+					
+					<div id="terminal" class="terminal"></div>
+
+					<div class="inline field">
+						<label></label>
+						<button class="ui primary button{{if not .CanCreateRepo}} disabled{{end}}" id="submitDefault">
+							{{ctx.Locale.Tr "repo.create_repo"}}
+						</button>
+					</div>
+				</div>
+			</form>
+		</div>
+	</div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', (event) => {
+        const repoURL = "{{.RepoURL}}";
+        if (repoURL) {
+            alert("Repository created successfully! URL: " + repoURL);
+            // Alternatively, you can display it on the page instead of an alert
+            const urlDiv = document.createElement('div');
+            urlDiv.className = 'ui positive message';
+            urlDiv.textContent = "Repository created successfully! URL: " + repoURL;
+            document.querySelector('.page-content').prepend(urlDiv);
+        }
+    });
+</script>
+
+{{template "base/footer" .}}

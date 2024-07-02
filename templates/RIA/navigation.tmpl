@@ -74,6 +74,12 @@
 
     <p id="status" class="status">Loading...</p>
 
+    {{if .NewRepoURL}}
+        <div class="ui positive message">
+            <p>Repository created successfully: <a href="{{.NewRepoURL}}">{{.NewRepoURL}}</a></p>
+        </div>
+    {{end}}
+
 	<a id="submitDefault"><button>Submit default</button></a>
     <a href="config"><button>Edit Config File only</button></a>
     <a href="train"><button>Edit Train Default File only</button></a>

@@ -89,6 +89,12 @@
 <body>
 
     <div role="main" aria-label="{{.Title}}" class="page-content main-content ui">
+
+        {{if .NewRepoURL}}
+            <div class="ui positive message">
+                <p>Repository created successfully: <a href="{{.NewRepoURL}}">{{.NewRepoURL}}</a></p>
+            </div>
+        {{end}}
         
         <a href="{{AppSubUrl}}/ria"><button>Back</button></a>
 
