@@ -12,12 +12,6 @@
 				<div class="ui attached segment">
 					{{template "base/alert" .}}
 
-					{{if .NewRepoURL}}
-						<div class="ui positive message">
-							<p>Repository created successfully: <a href="{{.NewRepoURL}}">{{.NewRepoURL}}</a></p>
-						</div>
-					{{end}}
-
                     {{if not $.DisableMigrations}}
                         <p class="ui center">Initialize a new RIA project, then run the RIA workflow and all created objects will be added automatically!</p>
                     {{end}}
@@ -58,40 +52,19 @@
 					</div>
 					<div class="inline field">
 						<label>{{ctx.Locale.Tr "repo.template"}}</label>
-						<div id="repo_template_search" class="ui search normal selection dropdown">
-							<input type="hidden" id="repo_template" name="repo_template" value="{{.repo_template}}">
+						<div id="repo_template_search" class="ui search normal selection dropdown disabled">
+							<input type="hidden" id="repo_template" name="repo_template" value="{{.repo_template}}" readonly>
 							<div class="default text">{{.repo_template_name}}</div>
-							<div class="menu">
-							</div>
 						</div>
 					</div>
-
 					<div id="template_units" class="tw-hidden">
 						<div class="inline field">
-							<label>{{ctx.Locale.Tr "repo.template.items"}}</label>
-							<div class="ui checkbox">
-								<input name="git_content" type="checkbox" {{if .git_content}}checked{{end}}>
-								<label>{{ctx.Locale.Tr "repo.template.git_content"}}</label>
+								<label>{{ctx.Locale.Tr "repo.template.items"}}</label>
+								<div class="ui checkbox">
+									<input name="git_content" type="checkbox" {{if .git_content}}checked{{end}} onclick="return false;">
+									<label>{{ctx.Locale.Tr "repo.template.git_content"}}</label>
+								</div>
 							</div>
-							<div class="ui checkbox" {{if not .SignedUser.CanEditGitHook}}data-tooltip-content="{{ctx.Locale.Tr "repo.template.git_hooks_tooltip"}}"{{end}}>
-								<input name="git_hooks" type="checkbox" {{if .git_hooks}}checked{{end}}>
-								<label>{{ctx.Locale.Tr "repo.template.git_hooks"}}</label>
-							</div>
-						</div>
-						<div class="inline field">
-							<label></label>
-							<div class="ui checkbox">
-								<input name="webhooks" type="checkbox" {{if .webhooks}}checked{{end}}>
-								<label>{{ctx.Locale.Tr "repo.template.webhooks"}}</label>
-							</div>
-							<div class="ui checkbox">
-								<input name="topics" type="checkbox" {{if .topics}}checked{{end}}>
-								<label>{{ctx.Locale.Tr "repo.template.topics"}}</label>
-							</div>
-						</div>
-					</div>
-					
-					<div id="terminal" class="terminal"></div>
 
 					<div class="inline field">
 						<label></label>

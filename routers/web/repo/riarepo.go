@@ -4,9 +4,8 @@ import (
 	"net/http"
 	"net/url"
 
-	access_model "code.gitea.io/gitea/models/perm/access"
 	repo_model "code.gitea.io/gitea/models/repo"
-	"code.gitea.io/gitea/models/unit"
+	user_model "code.gitea.io/gitea/models/user"
 	"code.gitea.io/gitea/modules/base"
 	"code.gitea.io/gitea/modules/git"
 	"code.gitea.io/gitea/modules/log"
@@ -21,6 +20,20 @@ import (
 const (
 	tplRIARepo base.TplName = "RIA/repo_ria"
 )
+
+func getTemplateRepoID(ctx *context.Context) int64 {
+	user, err := user_model.GetUserByName(ctx, "umair5669")
+	if err != nil {
+		log.Error("GetUserByName: %v", err)
+		return 0
+	}
+	templateRepo, err := repo_model.GetRepositoryByName(ctx, user.ID, "riahub_user_template")
+	if err != nil {
+		log.Error("GetRepositoryByName: %v", err)
+		return 0
+	}
+	return templateRepo.ID
+}
 
 func CreateOther(ctx *context.Context) {
 	ctx.Data["Title"] = ctx.Tr("RIA Automation")
@@ -40,15 +53,8 @@ func CreateOther(ctx *context.Context) {
 	}
 	ctx.Data["ContextUser"] = ctxUser
 
-	ctx.Data["repo_template_name"] = ctx.Tr("repo.template_select")
-	templateID := ctx.FormInt64("template_id")
-	if templateID > 0 {
-		templateRepo, err := repo_model.GetRepositoryByID(ctx, templateID)
-		if err == nil && access_model.CheckRepoUnitUser(ctx, templateRepo, ctxUser, unit.TypeCode) {
-			ctx.Data["repo_template"] = templateID
-			ctx.Data["repo_template_name"] = templateRepo.Name
-		}
-	}
+	ctx.Data["repo_template_name"] = "umair5669/riahub_user_template"
+	ctx.Data["repo_template"] = getTemplateRepoID(ctx)
 
 	ctx.Data["CanCreateRepo"] = ctx.Doer.CanCreateRepo()
 	ctx.Data["MaxCreationLimit"] = ctx.Doer.MaxCreationLimit()
@@ -59,6 +65,9 @@ func CreateOther(ctx *context.Context) {
 		ctx.Data["NewRepoURL"] = newRepoURL
 		ctx.Session.Delete("newRepoURL")
 	}
+
+	// Set git_content to true by default
+	ctx.Data["git_content"] = true
 
 	ctx.HTML(http.StatusOK, tplRIARepo)
 }
@@ -88,6 +97,9 @@ func CreatePostOther(ctx *context.Context) {
 
 	var err error
 	var repo *repo_model.Repository
+
+	form.RepoTemplate = getTemplateRepoID(ctx)
+
 	if form.RepoTemplate > 0 {
 		opts := repo_service.GenerateRepoOptions{
 			Name:            form.RepoName,
