@@ -68,17 +68,17 @@
         .terminal p.message {
             color: white;
         }
+
+        #username {
+            display: none;
+        }
 </style>
 
 <div role="main" aria-label="{{.Title}}" class="page-content main-content ui">
 
     <p id="status" class="status">Loading...</p>
 
-    {{if .NewRepoURL}}
-        <div class="ui positive message">
-            <p>Repository created successfully: <a href="{{.NewRepoURL}}">{{.NewRepoURL}}</a></p>
-        </div>
-    {{end}}
+    <p id="username">{{.ContextUser.Name}}</p>
 
 	<a id="submitDefault"><button>Submit default</button></a>
     <a href="config"><button>Edit Config File only</button></a>
@@ -92,10 +92,12 @@
 <script>
     const terminalDiv = document.getElementById('terminal');
     const submitBtn = document.getElementById('submitDefault');
+    const usernamep = document.querySelector('#username');
+    const uname = usernamep.textContent;
 
     submitBtn.addEventListener('click', function() {
         const terminalDiv = document.getElementById('terminal');
-        const socket = new WebSocket('ws://192.168.0.35:8000/ws-run-instruction/');
+        const socket = new WebSocket(`ws://192.168.0.35:8000/ws-run-instruction/?username=${uname}`);
         terminalDiv.classList.add('terminal-show');
         let messageElement = document.createElement('p');
         messageElement.className = 'instruction';

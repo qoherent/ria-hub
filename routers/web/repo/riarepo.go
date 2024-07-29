@@ -1,6 +1,8 @@
 package repo
 
 import (
+	"bytes"
+	"fmt"
 	"net/http"
 	"net/url"
 
@@ -8,6 +10,7 @@ import (
 	user_model "code.gitea.io/gitea/models/user"
 	"code.gitea.io/gitea/modules/base"
 	"code.gitea.io/gitea/modules/git"
+	"code.gitea.io/gitea/modules/json"
 	"code.gitea.io/gitea/modules/log"
 	repo_module "code.gitea.io/gitea/modules/repository"
 	"code.gitea.io/gitea/modules/setting"
@@ -72,6 +75,39 @@ func CreateOther(ctx *context.Context) {
 	ctx.HTML(http.StatusOK, tplRIARepo)
 }
 
+func sendRepoInfo(username, repoName string) error {
+	// Prepare payload
+	payload := map[string]string{
+		"username": username,
+		"repoName": repoName,
+	}
+	payloadBytes, err := json.Marshal(payload)
+	if err != nil {
+		return err
+	}
+
+	// Create request
+	req, err := http.NewRequest("POST", "http://192.168.0.35:8000/repo-info/", bytes.NewBuffer(payloadBytes))
+	if err != nil {
+		return err
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	// Send request
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("failed to send repo info, status: %s", resp.Status)
+	}
+
+	return nil
+}
+
 func CreatePostOther(ctx *context.Context) {
 	form := web.GetForm(ctx).(*forms.CreateRepoForm)
 	ctx.Data["Title"] = ctx.Tr("RIA Automation")
@@ -133,6 +169,11 @@ func CreatePostOther(ctx *context.Context) {
 		if err == nil {
 			log.Trace("Repository generated [%d]: %s/%s", repo.ID, ctxUser.Name, repo.Name)
 			ctx.Session.Set("newRepoURL", repo.HTMLURL())
+			// Send repository info to backend
+			err = sendRepoInfo(ctxUser.Name, repo.Name)
+			if err != nil {
+				log.Error("Failed to send repository info: %v", err)
+			}
 			ctx.Redirect("/ria/navigation?newRepoURL=" + url.QueryEscape(repo.HTMLURL()))
 			return
 		}
@@ -154,9 +195,15 @@ func CreatePostOther(ctx *context.Context) {
 	}
 
 	if err != nil {
-		handleCreateError(ctx, ctxUser, err, "CreatePost", tplRIARepo, &form)
+		handleCreateError(ctx, ctxUser, err, "CreatePost", tplCreate, &form)
 		ctx.Redirect("/ria/navigation?newRepoURL=" + url.QueryEscape(repo.HTMLURL()))
 		return
+	}
+
+	// Send repository info to backend
+	err = sendRepoInfo(ctxUser.Name, repo.Name)
+	if err != nil {
+		log.Error("Failed to send repository info: %v", err)
 	}
 
 	ctx.Session.Set("newRepoURL", repo.HTMLURL())
